@@ -1,0 +1,44 @@
+services:
+    nginx:
+        image: nginx:latest
+        container_name: nginx_container
+        ports:
+            - "8080:80"
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+            - nginx_logs:/var/log/nginx
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.5.4
+        container_name: elasticsearch_container
+        environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+        ports:
+            - "9200:9200"
+        volumes:
+            - elastic_data:/usr/share/elasticsearch/data
+    kibana:
+        image: docker.elastic.co/kibana/kibana:9.1.4
+        container_name: kibana_container
+        ports:
+            - "5601:5601"
+        environment:
+            - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+        depends_on:
+            - elasticsearch
+    logstash:
+        image: docker.elastic.co/logstash/logstash:9.5.4
+        container_name: logstash_container
+        ports:
+            - "5044:5044"
+        depends_on:
+            - elasticsearch
+            - nginx
+        volumes:
+            - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+            - nginx_logs:/var/log/nginx:ro
+
+
+volumes:
+    elastic_data:
+    nginx_logs:
